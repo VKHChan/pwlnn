@@ -6,11 +6,11 @@
 # The left hand side equations have the same gradient as the right hand side equations
 # but with negative intercept values.
 
-getfullpwl <- function(pwl, data){
+getfullpwl <- function(pwl, data, constraint){
   
   if(class(pwl)!="pwl") stop("Need to provide the piecewise linear equations")
   
-  newpwl <- list(coeffs = matrix, BreakPoints = c())
+  newpwl <- list(coeffs = matrix, BreakPoints = c(), fitted = matrix, residuals = matrix, mse = 0)
   #equations <- matrix()
   noOfBP <- length(pwl$BreakPoints)
   
@@ -18,20 +18,20 @@ getfullpwl <- function(pwl, data){
   newcoeffs <- cbind(pwl$coeffs[,-1], pwl$coeffs)
   
   #replace the intercept of the left hand side equation to negative values
-  newcoeffs["(Intercept)", 1:noOfBP] <- (1-newcoeffs["(Intercept)", 1:noOfBP])
+  newcoeffs[1,] <- newcoeffs[1,] + constraint
+  newcoeffs["(Intercept)", 1:noOfBP] <- ((constraint*2)-newcoeffs["(Intercept)", 1:noOfBP])
   newcoeffs <- newcoeffs[,sort.list(newcoeffs["(Intercept)",])]
-  #print(newcoeffs)
   
   #find "new" breakpoints by finding intercepts between all lines
-  newBP <- c(-abs(pwl$BreakPoints), pwl$BreakPoints)
-  #i <- 1
-  #repeat{
-  #  BP <- findIntercept(newcoeffs["(Intercept)",i], newcoeffs["x1",i], newcoeffs["(Intercept)", i+1], newcoeffs["x1", i+1])
-  #  newBP <- c(newBP, BP)
+  newBP <- c()
+  i <- 1
+  repeat{
+    BP <- findIntercept(newcoeffs["(Intercept)",i], newcoeffs["x1",i], newcoeffs["(Intercept)", i+1], newcoeffs["x1", i+1])
+    newBP <- c(newBP, BP)
     
-  #  i <- i+1
-  #  if(i>(2*noOfBP)) break()
-  #}
+    i <- i+1
+    if(i>(2*noOfBP)) break()
+  }
   
   newBP <- sort(newBP)
   
@@ -39,6 +39,10 @@ getfullpwl <- function(pwl, data){
   newpwl$coeffs <- newcoeffs
   
   class(newpwl) <- "pwl"
+  
+  newpwl$fitted <- predicts.pwl(newpwl, data)
+  newpwl$residuals <- data[,2] - newpwl$fitted
+  newpwl$mse <- mean(newpwl$residuals^2)
   
   newpwl
 }

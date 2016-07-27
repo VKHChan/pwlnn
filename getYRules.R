@@ -1,8 +1,8 @@
-# Function that finds the Y Equations and it's class of the given data sets and pwl equations
+# Function that finds the Y Rules, it is used when user wants the rules only (not classifying Y classes)
 # Input to the functions are: Inputdata, hidden weights, outputweights, and the set of pwl equations
 # Output of the function is the list of Y Equation for each input data entry and it's class.
 
-getYEquations <- function(Input, hiddenW, outputW, bestpwl){
+getYRules <- function(Input, hiddenW, outputW, bestpwl){
   
   noOfdata <- nrow(Input)
   noOfnode <- ncol(hiddenW)
@@ -13,7 +13,7 @@ getYEquations <- function(Input, hiddenW, outputW, bestpwl){
   
   # this is used to keep track of the equation given by a node
   nodeYEquation <- matrix()
-
+  
   #calulate the weighted input
   weightedInput <- calculateWeightedValues(Input, hiddenW)
   
@@ -25,7 +25,7 @@ getYEquations <- function(Input, hiddenW, outputW, bestpwl){
     
     j <- 1
     repeat{
-
+      
       nodeYEquation <- matrix(nrow=1, ncol=nrow(hiddenW), hiddenW[,j])
       
       # take the weighted value of node j
@@ -37,7 +37,7 @@ getYEquations <- function(Input, hiddenW, outputW, bestpwl){
       pwlcoeff <- bestpwl[[j]]$coeffs
       
       noOfBP <- length(pwlBP)
-
+      
       # check if the weighted value locates in the first section
       if(value < pwlBP[1]){
         nodeYEquation<- pwlcoeff[2,1]*nodeYEquation
@@ -67,41 +67,14 @@ getYEquations <- function(Input, hiddenW, outputW, bestpwl){
     YEquations[i,] <- as.matrix(totalYEquation[1,,drop=FALSE])
     YEquations[i, "constant"] <- YEquations[i, "constant"] + outputW[noOfnode+1,1]
     
-      
+    
     i <- i+1
     if(i>noOfdata) break()
   }
-
+  
   #find the set of unique Y equations and the "classes"
   YRules<- findUniqueY(YEquations)
-  write.xlsx(YRules, "Y Classes.xlsx")
-  print(YRules)
+  write.xlsx(YRules, "Y Rules.xlsx")
   
-  noOfYRules <- nrow(YRules)
-  
-  #assign the input data to their Y classes
-  YClass <- matrix(nrow=noOfdata, ncol=1)
-  colnames(YClass) <- c("Y Class")
-  i <- 1
-  repeat{
-    j <- 1
-    repeat{
-      if(all(YEquations[i,]==YRules[j, 1:(noOfattribute+1)])==TRUE){
-        YClass[i,] <- YRules[j,"Y Class"]
-        break()
-      }
-      j <- j+1
-      if(j>noOfYRules){
-        YClass[i,] <- 0
-        break()
-      }
-    }
-    i <- i +1
-    if(i>noOfdata) break()
-  }
-  
-  YEquations <- cbind(Input, YEquations, YClass)
-  write.xlsx(YEquations, "Input with Y Class.xlsx")
-  
-  YEquations
+  YRules
 }

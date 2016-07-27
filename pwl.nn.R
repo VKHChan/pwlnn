@@ -32,7 +32,7 @@ pwl.nn <- function(data, noOfBP = NULL, l, maxBP = NULL, ...){
   # If there is only one breakpoint, we don't need to calculate the MSE matrix
   if(((!is.null(noOfBP))&&(noOfBP == 1)) || ((!is.null(maxBP))&&(maxBP == 1))){
     name <- "pwl1"
-    result <- findoneBP(data, l)
+    result <- findoneBP.nn(data, l)
     result$minmse <- result$minssr/nrow(data)
     result$minmse <- result$minssr/nrow(data)
     
@@ -45,7 +45,7 @@ pwl.nn <- function(data, noOfBP = NULL, l, maxBP = NULL, ...){
     
   }else{
   # otherwise, calculate SSR Matrix
-    ssrMatrix <- calculateSSRMatrix(data)
+    ssrMatrix <- calculateSSRMatrix.nn(data)
     print("SSRMatrix done!")
     
     # if maxBP is given, all the pwl equations up to the maxBP will be returned
@@ -69,7 +69,8 @@ pwl.nn <- function(data, noOfBP = NULL, l, maxBP = NULL, ...){
       result$BP <- data[BP,1]
       
       piecewise <- getequations.nn(data, result$BP)
-      piecewise$mse <- result$minmse
+      #piecewise$mse <- result$minmse
+      piecewise$mse <-  mean(piecewise$residuals^2)
       
       class(piecewise) <- "pwl"
       
